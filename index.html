@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slutsnusat 2.0</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3a86ff">
+
+  <style>
+    /* Body med bakgrundsbild och overlay */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: url('background.jpg') no-repeat center center fixed;
+      background-size: cover;
+      position: relative;
+      min-height: 100vh;
+      color: #eaeaea;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+    }
+
+    /* Semi-transparent overlay */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      z-index: 0;
+    }
+
+    /* Innehåll ovanpå overlay */
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 400px;
+      width: 100%;
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      color: #3a86ff;
+      margin-bottom: 1rem;
+    }
+
+    input, button {
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      font-size: 16px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #3a86ff;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #265dbe;
+    }
+
+    .result {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .tab-button {
+      padding: 10px 20px;
+      margin: 0 5px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #3a86ff;
+      color: white;
+      transition: background 0.3s;
+    }
+
+    .tab-button.active {
+      background: #265dbe;
+    }
+
+    .tab-button:hover {
+      background: #265dbe;
+    }
+
+    .tab-content {
+      text-align: center;
+    }
+
+    /* Achievements Grid */
+    .achievements-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .achievement {
+      padding: 10px;
+      border-radius: 8px;
+      background: #1a1a1a;
+      color: #ccc;
+      text-align: center;
+      opacity: 0.5;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .achievement.unlocked {
+      background: #3a86ff;
+      color: white;
+      opacity: 1;
+      animation: glow 1s ease-out, popEmoji 0.6s ease-out;
+    }
+
+    .achievement h3 {
+      margin: 5px 0;
+      font-size: 1rem;
+    }
+
+    .achievement p {
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
+    .blink {
+      animation: blinkAnim 0.6s ease-in-out;
+    }
+
+    @keyframes glow {
+      0% { box-shadow: 0 0 0px #3a86ff; transform: scale(0.8); }
+      50% { box-shadow: 0 0 15px #3a86ff; transform: scale(1.1); }
+      100% { box-shadow: 0 0 5px #3a86ff; transform: scale(1); }
+    }
+
+    @keyframes popEmoji {
+      0% { transform: scale(0.8); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes blinkAnim {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>🚭 Slutsnusat 2.0</h1>
+
+    <!-- Flikar -->
+    <div class="tabs">
+      <button onclick="showTab('progress')" class="tab-button active">Framsteg</button>
+      <button onclick="showTab('achievements')" class="tab-button">Achievements</button>
+      <button onclick="showTab('test')" class="tab-button">Test</button>
+    </div>
+
+    <!-- Framsteg -->
+    <div id="progress" class="tab-content">
+      <div>
+        <label>Datum du slutade snusa:</label><br>
+        <input type="date" id="quitDate">
+      </div>
+
+      <div>
+        <label>Pris per dosa (kr):</label><br>
+        <input type="number" id="price" value="50">
+      </div>
+
+      <div>
+        <label>Dosor per vecka:</label><br>
+        <input type="number" id="perWeek" value="5">
+      </div>
+
+      <button onclick="calculate()">Beräkna framsteg</button>
+      <button onclick="resetAll()">Återställ</button>
+
+      <div class="result" id="result"></div>
+    </div>
+
+    <!-- Achievements -->
+    <div id="achievements" class="tab-content" style="display:none;">
+      <h2>🏆 Achievements</h2>
+      <div id="achievementsList" class="achievements-grid"></div>
+    </div>
+
+    <!-- Test -->
+    <div id="test" class="tab-content" style="display:none;">
+      <h2>🔊 Testa achievement-ljud</h2>
+      <button onclick="testAchievement()">Testa achievement</button>
+    </div>
+
+    <!-- Ljud -->
+    <audio id="unlockSound" src="unlock.mp3" preload="auto"></audio>
+  </div>
+
+  <script>
+    // Flik-funktion
+    function showTab(tabName) {
+      const tabs = document.querySelectorAll('.tab-content');
+      tabs.forEach(t => t.style.display = 'none');
+      document.getElementById(tabName).style.display = 'block';
+
+      const buttons = document.querySelectorAll('.tab-button');
+      buttons.forEach(b => b.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+    }
+
+    // Achievements-data
+    const achievementsData = [
+      {title: "1 dosa sparad 🎉", condition: ds => ds >= 1},
+      {title: "10 dosor sparade 👏", condition: ds => ds >= 10},
+      {title: "50 dosor sparade 🔥", condition: ds => ds >= 50},
+      {title: "100 dosor sparade 🤯", condition: ds => ds >= 100},
+      {title: "1 dag snusfri 🙌", condition: d => d >= 1},
+      {title: "1 vecka snusfri 🎉", condition: d => d >= 7},
+      {title: "1 månad snusfri 🎊", condition: d => d >= 30},
+      {title: "1 år snusfri 👑", condition: d => d >= 365},
+      {title: "100 kr sparat 🍕", condition: m => m >= 100},
+      {title: "1000 kr sparat 👟", condition: m => m >= 1000},
+      {title: "25 000 kr sparat 🏝️", condition: m => m >= 25000},
+      {title: "3 000 000 kr sparat 🏎️💨", condition: m => m >= 3000000},
+    ];
+
+    const unlockSound = document.getElementById("unlockSound");
+
+    // Beräkna framsteg
+    function calculate() {
+      const quitDateVal = document.getElementById("quitDate").value;
+      const price = parseFloat(document.getElementById("price").value);
+      const perWeek = parseFloat(document.getElementById("perWeek").value);
+
+      if(!quitDateVal || isNaN(price) || isNaN(perWeek)) {
+        document.getElementById("result").innerText = "Fyll i alla fält!";
+        return;
+      }
+
+      localStorage.setItem("quitDate", quitDateVal);
+      localStorage.setItem("price", price);
+      localStorage.setItem("perWeek", perWeek);
+
+      const quitDate = new Date(quitDateVal);
+      const today = new Date();
+      const diffTime = today - quitDate;
+      const days = Math.floor(diffTime / (1000*60*60*24));
+      const weeks = days / 7;
+      const saved = weeks * perWeek * price;
+      const savedDosor = weeks * perWeek;
+
+      document.getElementById("result").innerHTML = `
+        <p>Du har varit snusfri i <b>${days}</b> dagar!</p>
+        <p>Du har sparat ungefär <b>${Math.round(saved)}</b> kr och <b>${Math.floor(savedDosor)}</b> dosor.</p>
+      `;
+
+      renderAchievements(days, savedDosor, saved);
+    }
+
+    function resetAll() {
+      localStorage.clear();
+      document.getElementById("quitDate").value = "";
+      document.getElementById("price").value = 50;
+      document.getElementById("perWeek").value = 5;
+      document.getElementById("result").innerText = "";
+      renderAchievements(0,0,0);
+    }
+
+    // Rendera achievements
+    function renderAchievements(days, savedDosor, savedMoney) {
+      const container = document.getElementById("achievementsList");
+      container.innerHTML = "";
+
+      achievementsData.forEach(a => {
+        let unlocked = a.condition(savedDosor) || a.condition(days) || a.condition(savedMoney);
+        const div = document.createElement("div");
+        div.classList.add("achievement");
+        div.innerHTML = `<h3>${a.title}</h3>`;
+
+        if(unlocked) {
+          setTimeout(() => {
+            div.classList.add("unlocked");
+            unlockSound.currentTime = 0;
+            unlockSound.play();
+
+            // Blink-emoji
+            const emojiMatch = a.title.match(/([\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}])/u);
+            if(emojiMatch) {
+              const emojiSpan = document.createElement("span");
+              emojiSpan.classList.add("blink");
+              emojiSpan.textContent = emojiMatch[0];
+              div.querySelector("h3").appendChild(document.createTextNode(" "));
+              div.querySelector("h3").appendChild(emojiSpan);
+              setTimeout(() => { emojiSpan.classList.remove("blink"); }, 600);
+            }
+          }, 50);
+        }
+
+        container.appendChild(div);
+      });
+    }
+
+    // Testknapp
+    function testAchievement() {
+      const container = document.getElementById("achievementsList");
+      const div = document.createElement("div");
+      div.classList.add("achievement");
+      div.innerHTML = `<h3>Test Achievement 🎉</h3>`;
+      container.appendChild(div);
+
+      setTimeout(() => {
+        div.classList.add("unlocked");
+        unlockSound.currentTime = 0;
+        unlockSound.play();
+
+        const emojiSpan = document.createElement("span");
+        emojiSpan.classList.add("blink");
+        emojiSpan.textContent = "🎉";
+        div.querySelector("h3").appendChild(document.createTextNode(" "));
+        div.querySelector("h3").appendChild(emojiSpan);
+        setTimeout(() => { emojiSpan.classList.remove("blink"); }, 600);
+      }, 50);
+    }
+
+    // Ladda sparad data
+    window.onload = function() {
+      if(localStorage.getItem("quitDate")) document.getElementById("quitDate").value = localStorage.getItem("quitDate");
+      if(localStorage.getItem("price")) document.getElementById("price").value = localStorage.getItem("price");
+      if(localStorage.getItem("perWeek")) document.getElementById("perWeek").value = localStorage.getItem("perWeek");
+      calculate();
+    }
+
+    // Service Worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").then(() => console.log("Service Worker registrerad!"));
+    }
+  </script>
+</body>
+</html>
