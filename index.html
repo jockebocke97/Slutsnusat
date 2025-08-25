@@ -1,357 +1,249 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Slutsnusat 2.0</title>
-
-  <!-- PWA Manifest -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#3a86ff">
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>🚭 Slutsnusat</title>
   <style>
-    /* Body med bakgrundsbild och overlay */
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: url('background.jpg') no-repeat center center fixed;
-      background-size: cover;
-      position: relative;
-      min-height: 100vh;
-      color: #eaeaea;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      padding: 20px;
+    :root{
+      --bg1:#0f172a; --bg2:#1f2937; --card:rgba(255,255,255,0.06);
+      --text:#fff; --muted:#cbd5e1; --accent:#3b82f6; --success:#22c55e;
+      --barbg:rgba(255,255,255,0.15);
+      --maxw:420px;
     }
-
-    /* Semi-transparent overlay */
-    body::before {
-      content: "";
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6);
-      z-index: 0;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      background:linear-gradient(180deg,var(--bg1),#0b1220 40%,var(--bg2) 100%);
+      display:flex; flex-direction:column;
     }
-
-    /* Innehåll ovanpå overlay */
-    .app {
-      position: relative;
-      z-index: 1;
-      max-width: 400px;
-      width: 100%;
-      padding: 20px;
-      border-radius: 12px;
+    header{
+      position:sticky; top:0; z-index:10;
+      background:rgba(15,23,42,.9); backdrop-filter:blur(8px);
+      padding:16px; text-align:center; font-weight:700; letter-spacing:.3px;
+      border-bottom:1px solid rgba(255,255,255,.08);
     }
-
-    h1 {
-      font-size: 2.2rem;
-      color: #3a86ff;
-      margin-bottom: 1rem;
+    main{flex:1; display:flex; justify-content:flex-start; overflow:auto}
+    .container{width:100%; max-width:var(--maxw); margin:0 auto; padding:16px 16px 32px}
+    h1{font-size:1.4rem; margin:8px 0 12px}
+    h2{font-size:1.2rem; margin:18px 0 10px}
+    label{display:block; margin:10px 0 6px; color:var(--muted)}
+    input{
+      width:100%; padding:12px; font-size:1rem; border:none; border-radius:12px;
+      background:rgba(255,255,255,.08); color:var(--text); text-align:center;
+      outline:2px solid transparent; outline-offset:2px;
     }
-
-    input, button {
-      margin: 8px 0;
-      padding: 10px;
-      border-radius: 6px;
-      border: none;
-      font-size: 16px;
-      width: 100%;
-      box-sizing: border-box;
+    input:focus{outline-color:var(--accent)}
+    .btn{
+      width:100%; padding:14px; border:none; border-radius:14px; cursor:pointer;
+      font-weight:700; color:#fff; background:var(--accent);
+      transition:transform .06s ease, filter .2s ease; margin-top:10px;
     }
-
-    button {
-      background: #3a86ff;
-      color: white;
-      cursor: pointer;
-      transition: background 0.3s;
+    .btn:active{transform:scale(.99)}
+    .btn.secondary{background:#64748b}
+    .cards{
+      margin-top:16px; display:grid; gap:10px;
     }
-
-    button:hover {
-      background: #265dbe;
+    .card{
+      background:var(--card); border-radius:16px; padding:12px 14px;
+      box-shadow:0 10px 30px rgba(0,0,0,.2);
     }
-
-    .result {
-      margin-top: 20px;
-      font-size: 18px;
+    .result-item{display:flex; justify-content:space-between; padding:8px 0; color:#e2e8f0}
+    .ach-section{margin-top:18px; display:none;}
+    .cat{
+      margin-top:16px; padding:12px; border-radius:16px; background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.06);
     }
-
-    /* Tabs */
-    .tabs {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 20px;
+    .cat-title{
+      display:flex; align-items:center; gap:8px; margin:0 0 8px; font-weight:700;
     }
-
-    .tab-button {
-      padding: 10px 20px;
-      margin: 0 5px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      background: #3a86ff;
-      color: white;
-      transition: background 0.3s;
+    .ach{
+      margin:10px 0; padding:10px; border-radius:12px; background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
     }
-
-    .tab-button.active {
-      background: #265dbe;
-    }
-
-    .tab-button:hover {
-      background: #265dbe;
-    }
-
-    .tab-content {
-      text-align: center;
-    }
-
-    /* Achievements Grid */
-    .achievements-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 12px;
-      margin-top: 20px;
-    }
-
-    .achievement {
-      padding: 10px;
-      border-radius: 8px;
-      background: #1a1a1a;
-      color: #ccc;
-      text-align: center;
-      opacity: 0.5;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    .achievement.unlocked {
-      background: #3a86ff;
-      color: white;
-      opacity: 1;
-      animation: glow 1s ease-out, popEmoji 0.6s ease-out;
-    }
-
-    .achievement h3 {
-      margin: 5px 0;
-      font-size: 1rem;
-    }
-
-    .achievement p {
-      margin: 0;
-      font-size: 0.9rem;
-    }
-
-    .blink {
-      animation: blinkAnim 0.6s ease-in-out;
-    }
-
-    @keyframes glow {
-      0% { box-shadow: 0 0 0px #3a86ff; transform: scale(0.8); }
-      50% { box-shadow: 0 0 15px #3a86ff; transform: scale(1.1); }
-      100% { box-shadow: 0 0 5px #3a86ff; transform: scale(1); }
-    }
-
-    @keyframes popEmoji {
-      0% { transform: scale(0.8); }
-      50% { transform: scale(1.2); }
-      100% { transform: scale(1); }
-    }
-
-    @keyframes blinkAnim {
-      0%,100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
+    .ach-top{display:flex; justify-content:space-between; gap:12px; align-items:center}
+    .ach-name{font-size:.98rem}
+    .ach-goal{font-size:.82rem; color:var(--muted)}
+    .bar{height:12px; width:100%; background:var(--barbg); border-radius:999px; overflow:hidden; margin-top:8px}
+    .fill{height:100%; width:0%; background:var(--accent); transition:width .5s ease}
+    .meta{font-size:.8rem; color:#d1d5db; margin-top:4px; text-align:right}
+    .unlocked{border-color:rgba(34,197,94,.7); background:rgba(34,197,94,.15)}
+    .fill.done{background:var(--success)}
+    .btn, input{min-height:44px}
   </style>
 </head>
 <body>
-  <div class="app">
-    <h1>🚭 Slutsnusat 2.0</h1>
+  <header>🚭 Slutsnusat</header>
+  <main>
+    <div class="container">
+      <h1>Din resa mot snusfri</h1>
 
-    <!-- Flikar -->
-    <div class="tabs">
-      <button onclick="showTab('progress')" class="tab-button active">Framsteg</button>
-      <button onclick="showTab('achievements')" class="tab-button">Achievements</button>
-      <button onclick="showTab('test')" class="tab-button">Test</button>
-    </div>
+      <div class="card">
+        <label for="quitDate">Slutade snusa (datum)</label>
+        <input type="date" id="quitDate"/>
 
-    <!-- Framsteg -->
-    <div id="progress" class="tab-content">
-      <div>
-        <label>Datum du slutade snusa:</label><br>
-        <input type="date" id="quitDate">
+        <label for="prillorPerDay">Prillor per dag</label>
+        <input type="number" id="prillorPerDay" placeholder="t.ex. 20" inputmode="numeric"/>
+
+        <label for="prisPerDosa">Pris per dosa (kr)</label>
+        <input type="number" id="prisPerDosa" placeholder="t.ex. 50" inputmode="numeric"/>
+
+        <button class="btn" onclick="calculate()">Beräkna framsteg</button>
+        <button id="achBtn" class="btn secondary" onclick="toggleAchievements()">Visa achievements</button>
       </div>
 
-      <div>
-        <label>Pris per dosa (kr):</label><br>
-        <input type="number" id="price" value="50">
+      <div class="cards card" id="results" aria-live="polite">
+        <h2>📊 Dina siffror</h2>
+        <div class="result-item"><span>Antal dagar snusfri</span><strong id="r-days">–</strong></div>
+        <div class="result-item"><span>Prillor undvikna</span><strong id="r-prillor">–</strong></div>
+        <div class="result-item"><span>Dosor undvikna</span><strong id="r-dosor">–</strong></div>
+        <div class="result-item"><span>Pengar sparade</span><strong id="r-money">–</strong></div>
       </div>
 
-      <div>
-        <label>Dosor per vecka:</label><br>
-        <input type="number" id="perWeek" value="5">
-      </div>
+      <!-- Achievements -->
+      <section class="ach-section" id="achievements">
+        <h2>🎖️ Dina achievements</h2>
 
-      <button onclick="calculate()">Beräkna framsteg</button>
-      <button onclick="resetAll()">Återställ</button>
+        <div class="cat" id="cat-time"><div class="cat-title">⏳ Tid</div></div>
+        <div class="cat" id="cat-money"><div class="cat-title">💰 Ekonomi</div></div>
+        <div class="cat" id="cat-prillor"><div class="cat-title">📦 Prillor & dosor</div></div>
+        <div class="cat" id="cat-health"><div class="cat-title">💪 Hälsa</div></div>
+      </section>
 
-      <div class="result" id="result"></div>
     </div>
-
-    <!-- Achievements -->
-    <div id="achievements" class="tab-content" style="display:none;">
-      <h2>🏆 Achievements</h2>
-      <div id="achievementsList" class="achievements-grid"></div>
-    </div>
-
-    <!-- Test -->
-    <div id="test" class="tab-content" style="display:none;">
-      <h2>🔊 Testa achievement-ljud</h2>
-      <button onclick="testAchievement()">Testa achievement</button>
-    </div>
-
-    <!-- Ljud -->
-    <audio id="unlockSound" src="unlock.mp3" preload="auto"></audio>
-  </div>
+  </main>
 
   <script>
-    // Flik-funktion
-    function showTab(tabName) {
-      const tabs = document.querySelectorAll('.tab-content');
-      tabs.forEach(t => t.style.display = 'none');
-      document.getElementById(tabName).style.display = 'block';
-
-      const buttons = document.querySelectorAll('.tab-button');
-      buttons.forEach(b => b.classList.remove('active'));
-      event.currentTarget.classList.add('active');
-    }
-
-    // Achievements-data
-    const achievementsData = [
-      {title: "1 dosa sparad 🎉", condition: ds => ds >= 1},
-      {title: "10 dosor sparade 👏", condition: ds => ds >= 10},
-      {title: "50 dosor sparade 🔥", condition: ds => ds >= 50},
-      {title: "100 dosor sparade 🤯", condition: ds => ds >= 100},
-      {title: "1 dag snusfri 🙌", condition: d => d >= 1},
-      {title: "1 vecka snusfri 🎉", condition: d => d >= 7},
-      {title: "1 månad snusfri 🎊", condition: d => d >= 30},
-      {title: "1 år snusfri 👑", condition: d => d >= 365},
-      {title: "100 kr sparat 🍕", condition: m => m >= 100},
-      {title: "1000 kr sparat 👟", condition: m => m >= 1000},
-      {title: "25 000 kr sparat 🏝️", condition: m => m >= 25000},
-      {title: "3 000 000 kr sparat 🏎️💨", condition: m => m >= 3000000},
+    const ACHIEVEMENTS = [
+      {id:'t1', cat:'time', name:'Första dagen utan snus', metric:'days', goal:1},
+      {id:'t2', cat:'time', name:'1 vecka snusfri', metric:'days', goal:7},
+      {id:'t3', cat:'time', name:'2 veckor snusfri', metric:'days', goal:14},
+      {id:'t4', cat:'time', name:'1 månad snusfri', metric:'days', goal:30},
+      {id:'t5', cat:'time', name:'2 månader snusfri', metric:'days', goal:60},
+      {id:'t6', cat:'time', name:'3 månader snusfri', metric:'days', goal:90},
+      {id:'t7', cat:'time', name:'6 månader snusfri', metric:'days', goal:180},
+      {id:'t8', cat:'time', name:'1 år snusfri', metric:'days', goal:365},
+      {id:'m1', cat:'money', name:'100 kr sparade', metric:'money', goal:100},
+      {id:'m2', cat:'money', name:'250 kr sparade', metric:'money', goal:250},
+      {id:'m3', cat:'money', name:'500 kr sparade', metric:'money', goal:500},
+      {id:'m4', cat:'money', name:'1 000 kr sparade', metric:'money', goal:1000},
+      {id:'m5', cat:'money', name:'2 500 kr sparade', metric:'money', goal:2500},
+      {id:'m6', cat:'money', name:'5 000 kr sparade', metric:'money', goal:5000},
+      {id:'m7', cat:'money', name:'10 000 kr sparade', metric:'money', goal:10000},
+      {id:'m8', cat:'money', name:'20 000 kr sparade', metric:'money', goal:20000},
+      {id:'p1', cat:'prillor', name:'20 prillor undvikna', metric:'prillor', goal:20},
+      {id:'p2', cat:'prillor', name:'50 prillor undvikna', metric:'prillor', goal:50},
+      {id:'p3', cat:'prillor', name:'100 prillor undvikna', metric:'prillor', goal:100},
+      {id:'p4', cat:'prillor', name:'250 prillor undvikna', metric:'prillor', goal:250},
+      {id:'p5', cat:'prillor', name:'500 prillor undvikna', metric:'prillor', goal:500},
+      {id:'p6', cat:'prillor', name:'1 000 prillor undvikna', metric:'prillor', goal:1000},
+      {id:'p7', cat:'prillor', name:'5 000 prillor undvikna', metric:'prillor', goal:5000},
+      {id:'p8', cat:'prillor', name:'10 000 prillor undvikna', metric:'prillor', goal:10000},
+      {id:'h1', cat:'health', name:'Blodtrycket förbättras', metric:'days', goal:1},
+      {id:'h2', cat:'health', name:'Cirkulationen förbättras', metric:'days', goal:7},
+      {id:'h3', cat:'health', name:'Smak & luktsinne återhämtas', metric:'days', goal:14},
+      {id:'h4', cat:'health', name:'Vilopuls stabiliseras', metric:'days', goal:30},
+      {id:'h5', cat:'health', name:'Lungkapaciteten ökar', metric:'days', goal:90},
+      {id:'h6', cat:'health', name:'Hud & energi förbättras', metric:'days', goal:180},
     ];
 
-    const unlockSound = document.getElementById("unlockSound");
+    const cats = {
+      time: document.getElementById('cat-time'),
+      money: document.getElementById('cat-money'),
+      prillor: document.getElementById('cat-prillor'),
+      health: document.getElementById('cat-health'),
+    };
 
-    // Beräkna framsteg
-    function calculate() {
-      const quitDateVal = document.getElementById("quitDate").value;
-      const price = parseFloat(document.getElementById("price").value);
-      const perWeek = parseFloat(document.getElementById("perWeek").value);
+    function createAchievementEl(a){
+      const wrap = document.createElement('div'); wrap.className='ach'; wrap.id='ach-'+a.id;
+      const top = document.createElement('div'); top.className='ach-top';
+      const name = document.createElement('div'); name.className='ach-name'; name.textContent=a.name;
+      const goal = document.createElement('div'); goal.className='ach-goal'; goal.textContent=goalLabel(a);
+      top.appendChild(name); top.appendChild(goal);
+      const bar = document.createElement('div'); bar.className='bar';
+      const fill = document.createElement('div'); fill.className='fill'; fill.id='fill-'+a.id;
+      bar.appendChild(fill);
+      const meta = document.createElement('div'); meta.className='meta'; meta.id='meta-'+a.id; meta.textContent='0%';
+      wrap.appendChild(top); wrap.appendChild(bar); wrap.appendChild(meta);
+      return wrap;
+    }
 
-      if(!quitDateVal || isNaN(price) || isNaN(perWeek)) {
-        document.getElementById("result").innerText = "Fyll i alla fält!";
-        return;
+    function goalLabel(a){
+      if(a.metric==='days')   return `${a.goal} dagar`;
+      if(a.metric==='money')  return `${formatMoney(a.goal)} kr`;
+      if(a.metric==='prillor')return `${formatInt(a.goal)} prillor`;
+      return '';
+    }
+
+    ACHIEVEMENTS.forEach(a=>{
+      cats[a.cat].appendChild(createAchievementEl(a));
+    });
+
+    function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
+    function formatInt(n){return Math.round(n).toLocaleString('sv-SE');}
+    function formatMoney(n){return Math.round(n).toLocaleString('sv-SE');}
+
+    function calculate(){
+      const quit = new Date(document.getElementById('quitDate').value);
+      const prillorPerDay = parseFloat(document.getElementById('prillorPerDay').value);
+      const prisPerDosa   = parseFloat(document.getElementById('prisPerDosa').value);
+
+      if(!(quit instanceof Date) || isNaN(quit) || !prillorPerDay || !prisPerDosa){
+        alert('Fyll i alla fält.'); return;
       }
 
-      localStorage.setItem("quitDate", quitDateVal);
-      localStorage.setItem("price", price);
-      localStorage.setItem("perWeek", perWeek);
+      const now = new Date();
+      const daysPassed = Math.floor((now - quit)/(1000*60*60*24));
+      const totalPrillor = Math.max(0, Math.floor(daysPassed * prillorPerDay));
+      const totalDosor = totalPrillor/20;
+      const totalSparat = totalDosor * prisPerDosa;
 
-      const quitDate = new Date(quitDateVal);
-      const today = new Date();
-      const diffTime = today - quitDate;
-      const days = Math.floor(diffTime / (1000*60*60*24));
-      const weeks = days / 7;
-      const saved = weeks * perWeek * price;
-      const savedDosor = weeks * perWeek;
+      document.getElementById('r-days').textContent   = formatInt(daysPassed);
+      document.getElementById('r-prillor').textContent= formatInt(totalPrillor);
+      document.getElementById('r-dosor').textContent  = totalDosor.toFixed(1).replace('.',',');
+      document.getElementById('r-money').textContent  = `${formatMoney(totalSparat)} kr`;
 
-      document.getElementById("result").innerHTML = `
-        <p>Du har varit snusfri i <b>${days}</b> dagar!</p>
-        <p>Du har sparat ungefär <b>${Math.round(saved)}</b> kr och <b>${Math.floor(savedDosor)}</b> dosor.</p>
-      `;
+      const metricVal = {
+        days: Math.max(0, daysPassed),
+        money: Math.max(0, totalSparat),
+        prillor: Math.max(0, totalPrillor)
+      };
 
-      renderAchievements(days, savedDosor, saved);
-    }
+      ACHIEVEMENTS.forEach(a=>{
+        const cur = metricVal[a.metric];
+        const pct = clamp((cur / a.goal) * 100, 0, 100);
+        const fill = document.getElementById('fill-'+a.id);
+        const meta = document.getElementById('meta-'+a.id);
+        const wrap = document.getElementById('ach-'+a.id);
 
-    function resetAll() {
-      localStorage.clear();
-      document.getElementById("quitDate").value = "";
-      document.getElementById("price").value = 50;
-      document.getElementById("perWeek").value = 5;
-      document.getElementById("result").innerText = "";
-      renderAchievements(0,0,0);
-    }
+        fill.style.width = pct.toFixed(2) + '%';
+        if(pct >= 100){ fill.classList.add('done'); wrap.classList.add('unlocked'); }
+        else { fill.classList.remove('done'); wrap.classList.remove('unlocked'); }
 
-    // Rendera achievements
-    function renderAchievements(days, savedDosor, savedMoney) {
-      const container = document.getElementById("achievementsList");
-      container.innerHTML = "";
-
-      achievementsData.forEach(a => {
-        let unlocked = a.condition(savedDosor) || a.condition(days) || a.condition(savedMoney);
-        const div = document.createElement("div");
-        div.classList.add("achievement");
-        div.innerHTML = `<h3>${a.title}</h3>`;
-
-        if(unlocked) {
-          setTimeout(() => {
-            div.classList.add("unlocked");
-            unlockSound.currentTime = 0;
-            unlockSound.play();
-
-            // Blink-emoji
-            const emojiMatch = a.title.match(/([\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}])/u);
-            if(emojiMatch) {
-              const emojiSpan = document.createElement("span");
-              emojiSpan.classList.add("blink");
-              emojiSpan.textContent = emojiMatch[0];
-              div.querySelector("h3").appendChild(document.createTextNode(" "));
-              div.querySelector("h3").appendChild(emojiSpan);
-              setTimeout(() => { emojiSpan.classList.remove("blink"); }, 600);
-            }
-          }, 50);
+        if(a.metric==='days'){
+          meta.textContent = `${Math.min(a.goal, Math.max(0,cur))|0}/${a.goal} dagar (${Math.floor(pct)}%)`;
+        } else if(a.metric==='money'){
+          const curFmt = formatMoney(Math.min(a.goal, Math.max(0,cur)));
+          meta.textContent = `${curFmt}/${formatMoney(a.goal)} kr (${Math.floor(pct)}%)`;
+        } else {
+          meta.textContent = `${formatInt(Math.min(a.goal, Math.max(0,cur)))}/${formatInt(a.goal)} prillor (${Math.floor(pct)}%)`;
         }
-
-        container.appendChild(div);
       });
     }
 
-    // Testknapp
-    function testAchievement() {
-      const container = document.getElementById("achievementsList");
-      const div = document.createElement("div");
-      div.classList.add("achievement");
-      div.innerHTML = `<h3>Test Achievement 🎉</h3>`;
-      container.appendChild(div);
-
-      setTimeout(() => {
-        div.classList.add("unlocked");
-        unlockSound.currentTime = 0;
-        unlockSound.play();
-
-        const emojiSpan = document.createElement("span");
-        emojiSpan.classList.add("blink");
-        emojiSpan.textContent = "🎉";
-        div.querySelector("h3").appendChild(document.createTextNode(" "));
-        div.querySelector("h3").appendChild(emojiSpan);
-        setTimeout(() => { emojiSpan.classList.remove("blink"); }, 600);
-      }, 50);
-    }
-
-    // Ladda sparad data
-    window.onload = function() {
-      if(localStorage.getItem("quitDate")) document.getElementById("quitDate").value = localStorage.getItem("quitDate");
-      if(localStorage.getItem("price")) document.getElementById("price").value = localStorage.getItem("price");
-      if(localStorage.getItem("perWeek")) document.getElementById("perWeek").value = localStorage.getItem("perWeek");
-      calculate();
-    }
-
-    // Service Worker
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js").then(() => console.log("Service Worker registrerad!"));
+    function toggleAchievements(){
+      const section = document.getElementById('achievements');
+      const btn = document.getElementById('achBtn');
+      if(section.style.display==='none' || section.style.display===''){
+        section.style.display='block';
+        btn.textContent="Göm achievements";
+        section.scrollIntoView({behavior:'smooth', block:'start'});
+      } else {
+        section.style.display='none';
+        btn.textContent="Visa achievements";
+      }
     }
   </script>
 </body>
